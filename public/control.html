@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RETO SPEED — Control</title>
+<style>
+  :root {
+    --cyan: #5cc4f3; --cyan-bright: #7cdcfd; --card: #0e1d33;
+    --border: #52bdf3; --danger: #e2484f; --ok: #4ade80;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(180deg, #0a1626, #0c1d33 50%, #081320);
+    color: #fff; min-height: 100vh; padding: 20px;
+  }
+  .container { max-width: 760px; margin: 0 auto; }
+  h1 {
+    text-align:center; font-style:italic; font-weight:900; letter-spacing:0.15em;
+    color: var(--cyan-bright); text-shadow:0 0 14px rgba(124,220,253,0.7);
+    margin-bottom: 4px; font-size: 28px;
+  }
+  .sub { text-align:center; color:#6f93b5; margin-bottom:24px; font-size:14px; letter-spacing:0.2em; }
+
+  /* Login */
+  .login {
+    max-width: 340px; margin: 80px auto; background: var(--card);
+    border: 1px solid var(--border); border-radius: 14px; padding: 32px 28px;
+    box-shadow: 0 0 24px rgba(82,189,243,0.25); text-align:center;
+  }
+  .login input {
+    width:100%; padding:14px; font-size:24px; text-align:center; letter-spacing:0.5em;
+    background:#0a1626; border:1px solid var(--border); border-radius:8px; color:#fff; margin:16px 0;
+  }
+  .panel { display:none; }
+  .panel.active { display:block; }
+
+  .card {
+    background: var(--card); border:1px solid rgba(82,189,243,0.5);
+    border-radius:14px; padding:20px; margin-bottom:18px;
+    box-shadow: 0 0 18px rgba(82,189,243,0.15);
+  }
+  .card h2 { font-size:15px; color:var(--cyan); letter-spacing:0.15em; margin-bottom:14px; text-transform:uppercase; }
+
+  /* Cronómetro */
+  .stopwatch {
+    text-align:center;
+    font-variant-numeric: tabular-nums; font-weight:900; font-style:italic;
+    font-size: 64px; color: var(--cyan-bright);
+    text-shadow: 0 0 18px rgba(124,220,253,0.6); margin: 8px 0 18px;
+    letter-spacing: 0.03em;
+  }
+  .sw-buttons { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+
+  button {
+    font-family:inherit; font-weight:bold; cursor:pointer; border:none;
+    border-radius:8px; padding:12px 22px; font-size:15px; color:#fff;
+    transition: filter .15s, transform .05s;
+  }
+  button:active { transform: scale(0.97); }
+  .btn-start { background: linear-gradient(180deg,#3aa856,#1f7a3a); }
+  .btn-stop  { background: linear-gradient(180deg,#e8a33a,#b9781f); }
+  .btn-reset { background: linear-gradient(180deg,#46688f,#2c4866); }
+  .btn-primary { background: linear-gradient(180deg,#3a8fd0,#1f5e9e); }
+  .btn-danger { background: linear-gradient(180deg,#e2484f,#a32a30); }
+  .btn-sm { padding:7px 12px; font-size:13px; }
+  button:hover { filter: brightness(1.1); }
+
+  /* Ingreso */
+  .entry-grid { display:grid; grid-template-columns: 1fr 1fr auto; gap:10px; align-items:end; }
+  label { display:block; font-size:12px; color:#8fb4d6; margin-bottom:5px; letter-spacing:0.05em; }
+  select, .time-input {
+    width:100%; padding:12px; font-size:18px; background:#0a1626;
+    border:1px solid var(--border); border-radius:8px; color:#fff;
+  }
+  .time-input { text-align:center; font-variant-numeric:tabular-nums; letter-spacing:0.1em; }
+  .use-sw { font-size:12px; color:var(--cyan); cursor:pointer; text-decoration:underline; margin-top:6px; display:inline-block; }
+
+  /* Tabla equipos */
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:9px 8px; font-size:14px; border-bottom:1px solid rgba(82,189,243,0.15); }
+  th { color:#6f93b5; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; }
+  td.t-time { font-variant-numeric:tabular-nums; color:var(--cyan-bright); font-weight:bold; }
+  td.t-none { color:#4a6a8a; }
+  .order-badge { display:inline-block; width:22px; height:22px; line-height:22px; text-align:center;
+    background:#1a3a5c; border-radius:50%; font-size:12px; color:#9ce0ff; margin-right:6px; }
+
+  .msg { text-align:center; padding:10px; border-radius:8px; margin-bottom:14px; font-size:14px; display:none; }
+  .msg.show { display:block; }
+  .msg.ok { background:rgba(74,222,128,0.15); color:#4ade80; border:1px solid #4ade80; }
+  .msg.err { background:rgba(226,72,79,0.15); color:#ff8a8f; border:1px solid var(--danger); }
+
+  .danger-zone { border-color: rgba(226,72,79,0.5); }
+  .danger-zone h2 { color: #ff8a8f; }
+  .links { text-align:center; margin-top:20px; font-size:13px; }
+  .links a { color: var(--cyan); margin: 0 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>RETO SPEED</h1>
+  <div class="sub">PANEL DE CONTROL</div>
+
+  <!-- Login -->
+  <div class="login" id="login">
+    <div style="color:#8fb4d6; font-size:14px;">Ingresa el PIN de operador</div>
+    <input type="password" id="pinInput" inputmode="numeric" maxlength="8" placeholder="••••" autofocus>
+    <button class="btn-primary" style="width:100%;" onclick="doLogin()">Entrar</button>
+    <div class="msg err" id="loginMsg"></div>
+  </div>
+
+  <!-- Panel -->
+  <div class="panel" id="panel">
+    <div class="msg" id="msg"></div>
+
+    <!-- Cronómetro -->
+    <div class="card">
+      <h2>Cronómetro</h2>
+      <div class="stopwatch" id="sw">0:00:00</div>
+      <div class="sw-buttons">
+        <button class="btn-start" id="swStart" onclick="swToggle()">▶ Iniciar</button>
+        <button class="btn-reset" onclick="swReset()">↺ Reset</button>
+      </div>
+    </div>
+
+    <!-- Ingreso de tiempo -->
+    <div class="card">
+      <h2>Registrar tiempo</h2>
+      <div class="entry-grid">
+        <div>
+          <label>Equipo</label>
+          <select id="teamSel"></select>
+        </div>
+        <div>
+          <label>Tiempo (M:SS:CC)</label>
+          <input class="time-input" id="timeIn" placeholder="4:55:67" maxlength="8">
+        </div>
+        <button class="btn-primary" onclick="saveTime()">Guardar</button>
+      </div>
+      <span class="use-sw" onclick="useStopwatch()">⤺ Usar tiempo del cronómetro</span>
+    </div>
+
+    <!-- Tabla -->
+    <div class="card">
+      <h2>Equipos (orden de carrera)</h2>
+      <table>
+        <thead><tr><th>#</th><th>Equipo</th><th>Tiempo</th><th></th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Zona peligrosa -->
+    <div class="card danger-zone">
+      <h2>⚠ Zona de reinicio</h2>
+      <p style="font-size:13px; color:#b0c4d8; margin-bottom:12px;">
+        Borra <strong>todos</strong> los tiempos y reinicia las posiciones al orden de carrera.
+        Úsalo después de las pruebas, antes de la carrera oficial.
+      </p>
+      <button class="btn-danger" onclick="resetAll()">🗑 Borrar todo y empezar de cero</button>
+    </div>
+
+    <div class="links">
+      <a href="/" target="_blank">↗ Abrir pantalla de proyección</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  let PIN = sessionStorage.getItem('rs_pin') || '';
+
+  // ---------- Login ----------
+  async function doLogin() {
+    const pin = document.getElementById('pinInput').value;
+    const res = await fetch('/api/verify-pin', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ pin })
+    });
+    if (res.ok) {
+      PIN = pin; sessionStorage.setItem('rs_pin', pin);
+      showPanel();
+    } else {
+      const m = document.getElementById('loginMsg');
+      m.textContent = 'PIN incorrecto'; m.classList.add('show');
+    }
+  }
+  document.getElementById('pinInput').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+  function showPanel() {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('panel').classList.add('active');
+    loadTeams();
+    setInterval(loadTeams, 2000);
+  }
+  if (PIN) {
+    // Validar PIN guardado
+    fetch('/api/verify-pin', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:PIN})})
+      .then(r => { if(r.ok) showPanel(); else sessionStorage.removeItem('rs_pin'); });
+  }
+
+  // ---------- Mensajes ----------
+  function flash(text, ok=true) {
+    const m = document.getElementById('msg');
+    m.textContent = text;
+    m.className = 'msg show ' + (ok ? 'ok' : 'err');
+    setTimeout(() => m.classList.remove('show'), 2500);
+  }
+
+  // ---------- Cronómetro ----------
+  let swRunning = false, swStartTime = 0, swElapsed = 0, swRaf = null;
+  function fmt(ms) {
+    const totalCent = Math.floor(ms / 10);
+    const cent = totalCent % 100;
+    const totalSec = Math.floor(totalCent / 100);
+    const sec = totalSec % 60;
+    const min = Math.floor(totalSec / 60);
+    return min + ':' + String(sec).padStart(2,'0') + ':' + String(cent).padStart(2,'0');
+  }
+  function swTick() {
+    const now = performance.now();
+    const cur = swElapsed + (swRunning ? now - swStartTime : 0);
+    document.getElementById('sw').textContent = fmt(cur);
+    if (swRunning) swRaf = requestAnimationFrame(swTick);
+  }
+  function swToggle() {
+    const btn = document.getElementById('swStart');
+    if (!swRunning) {
+      swRunning = true; swStartTime = performance.now();
+      btn.textContent = '⏸ Detener'; btn.className = 'btn-stop';
+      swTick();
+    } else {
+      swRunning = false; swElapsed += performance.now() - swStartTime;
+      cancelAnimationFrame(swRaf);
+      btn.textContent = '▶ Continuar'; btn.className = 'btn-start';
+      swTick();
+    }
+  }
+  function swReset() {
+    swRunning = false; swElapsed = 0; cancelAnimationFrame(swRaf);
+    const btn = document.getElementById('swStart');
+    btn.textContent = '▶ Iniciar'; btn.className = 'btn-start';
+    document.getElementById('sw').textContent = '0:00:00';
+  }
+  function useStopwatch() {
+    document.getElementById('timeIn').value = document.getElementById('sw').textContent;
+  }
+
+  // ---------- Equipos ----------
+  async function loadTeams() {
+    const res = await fetch('/api/teams');
+    const teams = await res.json();
+    // Selector
+    const sel = document.getElementById('teamSel');
+    const prev = sel.value;
+    sel.innerHTML = teams.map(t => '<option value="'+t.name+'">'+t.run_order+'. '+t.name+'</option>').join('');
+    if (prev) sel.value = prev;
+    // Tabla
+    document.getElementById('tbody').innerHTML = teams.map(t =>
+      '<tr>' +
+        '<td><span class="order-badge">'+t.run_order+'</span></td>' +
+        '<td>'+t.name+'</td>' +
+        (t.time_display
+          ? '<td class="t-time">'+t.time_display+'</td>'
+          : '<td class="t-none">— sin tiempo —</td>') +
+        '<td>' + (t.time_display
+          ? '<button class="btn-reset btn-sm" onclick="clearTeam(\''+t.name+'\')">Borrar</button>'
+          : '') + '</td>' +
+      '</tr>'
+    ).join('');
+  }
+
+  async function saveTime() {
+    const team = document.getElementById('teamSel').value;
+    const time = document.getElementById('timeIn').value.trim();
+    if (!/^\d{1,2}:\d{2}:\d{2}$/.test(time)) {
+      return flash('Formato inválido. Usa M:SS:CC (ej. 4:55:67)', false);
+    }
+    const res = await fetch('/api/time', {
+      method:'POST', headers:{'Content-Type':'application/json','x-admin-pin':PIN},
+      body: JSON.stringify({ team, time })
+    });
+    if (res.ok) { flash('✓ '+team+' → '+time); document.getElementById('timeIn').value=''; loadTeams(); }
+    else { const e = await res.json(); flash(e.error || 'Error', false); }
+  }
+
+  async function clearTeam(team) {
+    if (!confirm('¿Borrar el tiempo de '+team+'?')) return;
+    const res = await fetch('/api/clear-team', {
+      method:'POST', headers:{'Content-Type':'application/json','x-admin-pin':PIN},
+      body: JSON.stringify({ team })
+    });
+    if (res.ok) { flash('Tiempo de '+team+' borrado'); loadTeams(); }
+  }
+
+  async function resetAll() {
+    if (!confirm('⚠ Esto borrará TODOS los tiempos y reiniciará las posiciones.\n¿Continuar?')) return;
+    if (!confirm('Confirma una vez más: ¿borrar todo y empezar de cero?')) return;
+    const res = await fetch('/api/reset', {
+      method:'POST', headers:{'Content-Type':'application/json','x-admin-pin':PIN},
+      body: JSON.stringify({})
+    });
+    if (res.ok) { flash('✓ Todos los registros borrados. Listo para la carrera oficial.'); loadTeams(); }
+    else flash('Error al reiniciar', false);
+  }
+</script>
+</body>
+</html>

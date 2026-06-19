@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RETO SPEED — Resultados</title>
+<style>
+  :root {
+    --bg-deep: #0a1626;
+    --bg-mid: #122a47;
+    --blue-glow: #2a76c4;
+    --cyan: #5cc4f3;
+    --cyan-bright: #7cdcfd;
+    --card-dark: #0e1d33;
+    --card-border: #52bdf3;
+    --time-color: #9ce0ff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Arial Narrow', 'Arial', sans-serif;
+    background:
+      radial-gradient(ellipse 90% 60% at 50% 28%, rgba(42,118,196,0.45), transparent 70%),
+      radial-gradient(ellipse 120% 80% at 50% 100%, rgba(10,22,38,1), transparent),
+      linear-gradient(180deg, #0a1626 0%, #0c1d33 45%, #081320 100%);
+    color: #fff;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+  /* Estrellas */
+  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .stars::before, .stars::after {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      radial-gradient(1.5px 1.5px at 20% 30%, rgba(255,255,255,0.8), transparent),
+      radial-gradient(1px 1px at 60% 70%, rgba(180,220,255,0.7), transparent),
+      radial-gradient(1.5px 1.5px at 80% 20%, rgba(255,255,255,0.6), transparent),
+      radial-gradient(1px 1px at 40% 80%, rgba(200,230,255,0.7), transparent),
+      radial-gradient(1px 1px at 90% 50%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1.5px 1.5px at 10% 60%, rgba(180,220,255,0.6), transparent),
+      radial-gradient(1px 1px at 70% 40%, rgba(255,255,255,0.7), transparent),
+      radial-gradient(1px 1px at 30% 10%, rgba(255,255,255,0.5), transparent);
+    background-size: 100% 100%;
+  }
+  /* Banderas a cuadros */
+  .flag {
+    position: fixed; z-index: 1; pointer-events: none; opacity: 0.9;
+    background-color: #0a1626;
+    background-image:
+      repeating-conic-gradient(#e8edf2 0% 25%, #141d2c 0% 50%);
+    background-size: 2.4vmin 2.4vmin;
+    mask-image: radial-gradient(ellipse at center, #000 50%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center, #000 50%, transparent 80%);
+  }
+  .flag.tl { top: -4vmin; left: -4vmin; width: 26vmin; height: 20vmin; transform: rotate(-10deg) skewX(-8deg); }
+  .flag.br { bottom: -4vmin; right: -4vmin; width: 26vmin; height: 20vmin; transform: rotate(-10deg) skewX(-8deg); }
+
+  .wrap {
+    position: relative; z-index: 5;
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 3vmin 4vmin;
+  }
+
+  /* Encabezado / logo */
+  .logo { text-align: center; margin-bottom: 1vmin; }
+  .logo .reto {
+    font-weight: 900; font-style: italic; letter-spacing: 0.15em;
+    font-size: 4vmin; color: #cfe9ff;
+    text-shadow: 0 0 10px rgba(92,196,243,0.8);
+  }
+  .logo .speed {
+    font-weight: 900; font-style: italic; letter-spacing: 0.04em;
+    font-size: 9vmin; line-height: 0.9;
+    background: linear-gradient(180deg, #aee0ff 0%, #2f7fce 50%, #0e3a6b 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 6px 16px rgba(0,0,0,0.6);
+    filter: drop-shadow(0 0 12px rgba(60,150,230,0.5));
+  }
+  .resultados {
+    font-weight: 900; font-style: italic; letter-spacing: 0.3em;
+    font-size: 5vmin; color: var(--cyan-bright); margin: 2vmin 0 3vmin;
+    text-shadow: 0 0 18px rgba(124,220,253,0.9), 0 0 4px rgba(124,220,253,1);
+  }
+
+  /* Lista de tarjetas */
+  .board {
+    width: 92%; max-width: 1700px;
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: column;
+  }
+  .viewport {
+    flex: 1; min-height: 0; overflow: hidden; position: relative;
+  }
+  .track {
+    display: flex; flex-direction: column; gap: 2.2vmin;
+    will-change: transform;
+  }
+
+  .row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 13% 1fr auto;
+    align-items: center;
+    height: 12vmin;
+    flex-shrink: 0;
+    padding: 0 5% 0 0;
+    transform: skewX(-12deg);
+    background: linear-gradient(110deg, rgba(14,29,51,0.96), rgba(18,42,71,0.92));
+    border: 0.35vmin solid var(--card-border);
+    box-shadow:
+      0 0 18px rgba(82,189,243,0.55),
+      inset 0 0 30px rgba(40,110,180,0.35);
+    transition: transform 0.1s;
+  }
+  .row > * { transform: skewX(12deg); }
+
+  .row .pos {
+    font-weight: 900; font-style: italic;
+    font-size: 9vmin; text-align: center;
+    color: var(--cyan-bright);
+    text-shadow: 0 0 16px rgba(124,220,253,0.9);
+    padding-left: 3%;
+  }
+  .row .name {
+    font-weight: 900; font-style: italic; letter-spacing: 0.08em;
+    font-size: 5.2vmin; color: var(--cyan-bright);
+    text-shadow: 0 0 12px rgba(124,220,253,0.7);
+    white-space: nowrap;
+  }
+  .row .time {
+    font-weight: 900; font-style: italic; letter-spacing: 0.05em;
+    font-size: 5.2vmin; color: var(--time-color);
+    text-shadow: 0 0 12px rgba(156,224,255,0.8);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .row.empty .time { color: #4a6a8a; text-shadow: none; opacity: 0.6; }
+
+  /* Top 3 destacados con un brillo extra */
+  .row.top1 { border-color: #ffe27a; box-shadow: 0 0 26px rgba(255,210,90,0.6), inset 0 0 30px rgba(120,90,30,0.3); }
+  .row.top1 .pos { color: #ffe27a; text-shadow: 0 0 18px rgba(255,210,90,0.9); }
+
+  /* Flecha scroll */
+  .scroll-hint {
+    text-align: center; margin-top: 1.5vmin;
+    color: var(--cyan-bright); font-weight: 900; font-style: italic;
+    letter-spacing: 0.2em; font-size: 2.4vmin;
+    text-shadow: 0 0 12px rgba(124,220,253,0.7);
+  }
+  .scroll-hint .arrow {
+    font-size: 4vmin; display: block; animation: bob 1.4s ease-in-out infinite;
+  }
+  @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(0.8vmin)} }
+
+  .live-dot {
+    position: fixed; top: 2vmin; right: 2.5vmin; z-index: 10;
+    display: flex; align-items: center; gap: 0.8vmin;
+    font-size: 1.8vmin; font-weight: bold; color: #7cdcfd; opacity: 0.7;
+  }
+  .live-dot i {
+    width: 1.2vmin; height: 1.2vmin; border-radius: 50%;
+    background: #4ade80; box-shadow: 0 0 8px #4ade80;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+</style>
+</head>
+<body>
+  <div class="stars"></div>
+  <div class="flag tl"></div>
+  <div class="flag br"></div>
+  <div class="live-dot"><i></i> EN VIVO</div>
+
+  <div class="wrap">
+    <div class="logo">
+      <div class="reto">RETO</div>
+      <div class="speed">SPEED</div>
+    </div>
+    <div class="resultados">RESULTADOS</div>
+
+    <div class="board">
+      <div class="viewport">
+        <div class="track" id="track"></div>
+      </div>
+      <div class="scroll-hint" id="hint">
+        <span class="arrow">▼</span>
+        SCROLL DOWN PARA MÁS
+      </div>
+    </div>
+  </div>
+
+<script>
+  const track = document.getElementById('track');
+  const hint = document.getElementById('hint');
+  let scrollTimer = null;
+
+  function render(data) {
+    track.innerHTML = '';
+    data.forEach((t) => {
+      const row = document.createElement('div');
+      row.className = 'row' + (t.position === 1 && t.hasTime ? ' top1' : '') + (t.hasTime ? '' : ' empty');
+      row.innerHTML =
+        '<div class="pos">' + t.position + '</div>' +
+        '<div class="name">' + t.name + '</div>' +
+        '<div class="time">' + (t.time || '--:--:--') + '</div>';
+      track.appendChild(row);
+    });
+    startAutoScroll();
+  }
+
+  // Scroll automático: muestra los primeros 4, luego se desplaza suavemente por el resto y vuelve.
+  function startAutoScroll() {
+    if (scrollTimer) clearInterval(scrollTimer);
+    const viewport = track.parentElement;
+    const overflow = track.scrollHeight - viewport.clientHeight;
+    track.style.transform = 'translateY(0)';
+    if (overflow <= 4) { hint.style.display = 'none'; return; }
+    hint.style.display = 'block';
+
+    let y = 0, dir = 1, pause = 90;
+    scrollTimer = setInterval(() => {
+      if (pause > 0) { pause--; return; }
+      y += dir * 0.6;
+      if (y >= overflow) { y = overflow; dir = -1; pause = 60; }
+      if (y <= 0) { y = 0; dir = 1; pause = 90; }
+      track.style.transform = 'translateY(' + (-y) + 'px)';
+    }, 30);
+  }
+
+  async function load() {
+    try {
+      const res = await fetch('/api/ranking');
+      const data = await res.json();
+      // Solo re-renderiza si cambió, para no reiniciar el scroll innecesariamente.
+      const sig = JSON.stringify(data);
+      if (sig !== window._lastSig) {
+        window._lastSig = sig;
+        render(data);
+      }
+    } catch (e) { /* reintentará */ }
+  }
+
+  load();
+  setInterval(load, 1500);
+  window.addEventListener('resize', () => { if (window._lastSig) render(JSON.parse(window._lastSig)); });
+</script>
+</body>
+</html>
