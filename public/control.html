@@ -191,6 +191,9 @@
     document.getElementById('panel').classList.add('active');
     loadTeams();
     setInterval(loadTeams, 2000);
+    loadSw();
+    setInterval(loadSw, 2000);   // resincroniza con el servidor
+    requestAnimationFrame(swTick); // anima local a 60fps
   }
   if (PIN) {
     // Validar PIN guardado
@@ -206,9 +209,10 @@
     setTimeout(() => m.classList.remove('show'), 2500);
   }
 
-  // ---------- Cronómetro ----------
-  let swRunning = false, swStartTime = 0, swElapsed = 0, swRaf = null;
+  // ---------- Cronómetro (sincronizado con la base de datos) ----------
+  let swState = { running:false, baseMs:0, startedEpochMs:null, offset:0 };
   function fmt(ms) {
+    if (ms < 0) ms = 0;
     const totalCent = Math.floor(ms / 10);
     const cent = totalCent % 100;
     const totalSec = Math.floor(totalCent / 100);
@@ -216,30 +220,44 @@
     const min = Math.floor(totalSec / 60);
     return min + ':' + String(sec).padStart(2,'0') + ':' + String(cent).padStart(2,'0');
   }
+  function applyState(s) {
+    swState.offset = s.serverNow - Date.now();
+    swState.running = s.running;
+    swState.baseMs = s.baseMs;
+    swState.startedEpochMs = s.startedEpochMs;
+    const btn = document.getElementById('swStart');
+    if (s.running) { btn.textContent = '⏸ Detener'; btn.className = 'btn-stop'; }
+    else { btn.textContent = swState.baseMs > 0 ? '▶ Continuar' : '▶ Iniciar'; btn.className = 'btn-start'; }
+  }
   function swTick() {
-    const now = performance.now();
-    const cur = swElapsed + (swRunning ? now - swStartTime : 0);
-    document.getElementById('sw').textContent = fmt(cur);
-    if (swRunning) swRaf = requestAnimationFrame(swTick);
-  }
-  function swToggle() {
-    const btn = document.getElementById('swStart');
-    if (!swRunning) {
-      swRunning = true; swStartTime = performance.now();
-      btn.textContent = '⏸ Detener'; btn.className = 'btn-stop';
-      swTick();
-    } else {
-      swRunning = false; swElapsed += performance.now() - swStartTime;
-      cancelAnimationFrame(swRaf);
-      btn.textContent = '▶ Continuar'; btn.className = 'btn-start';
-      swTick();
+    let ms = swState.baseMs;
+    if (swState.running && swState.startedEpochMs !== null) {
+      ms += (Date.now() + swState.offset) - swState.startedEpochMs;
     }
+    document.getElementById('sw').textContent = fmt(ms);
+    requestAnimationFrame(swTick);
   }
-  function swReset() {
-    swRunning = false; swElapsed = 0; cancelAnimationFrame(swRaf);
-    const btn = document.getElementById('swStart');
-    btn.textContent = '▶ Iniciar'; btn.className = 'btn-start';
-    document.getElementById('sw').textContent = '0:00:00';
+  async function loadSw() {
+    try {
+      const res = await fetch('/api/stopwatch');
+      applyState(await res.json());
+    } catch(e) {}
+  }
+  async function swToggle() {
+    const path = swState.running ? '/api/stopwatch/stop' : '/api/stopwatch/start';
+    const res = await fetch(path, {
+      method:'POST', headers:{'Content-Type':'application/json','x-admin-pin':PIN},
+      body: JSON.stringify({})
+    });
+    if (res.ok) applyState(await res.json());
+  }
+  async function swReset() {
+    if (!confirm('¿Reiniciar el cronómetro a 0:00:00?')) return;
+    const res = await fetch('/api/stopwatch/reset', {
+      method:'POST', headers:{'Content-Type':'application/json','x-admin-pin':PIN},
+      body: JSON.stringify({})
+    });
+    if (res.ok) applyState(await res.json());
   }
   function useStopwatch() {
     document.getElementById('timeIn').value = document.getElementById('sw').textContent;

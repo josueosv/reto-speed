@@ -74,7 +74,7 @@
   }
   .logo .speed {
     font-weight: 900; font-style: italic; letter-spacing: 0.04em;
-    font-size: 9vmin; line-height: 0.9;
+    font-size: 7vmin; line-height: 0.9;
     background: linear-gradient(180deg, #aee0ff 0%, #2f7fce 50%, #0e3a6b 100%);
     -webkit-background-clip: text; background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -83,9 +83,22 @@
   }
   .resultados {
     font-weight: 900; font-style: italic; letter-spacing: 0.3em;
-    font-size: 5vmin; color: var(--cyan-bright); margin: 2vmin 0 3vmin;
+    font-size: 4vmin; color: var(--cyan-bright); margin: 1vmin 0 2vmin;
     text-shadow: 0 0 18px rgba(124,220,253,0.9), 0 0 4px rgba(124,220,253,1);
   }
+
+  /* Cronómetro grande de proyección */
+  .big-clock {
+    font-variant-numeric: tabular-nums;
+    font-weight: 900; font-style: italic;
+    font-size: 8.5vmin; line-height: 1;
+    color: #fff;
+    letter-spacing: 0.04em;
+    margin: 1.5vmin 0 0.3vmin;
+    text-shadow: 0 0 24px rgba(124,220,253,0.9), 0 0 8px rgba(124,220,253,0.8);
+    transition: color 0.2s;
+  }
+  .big-clock.running { color: #b6f5c8; text-shadow: 0 0 28px rgba(120,240,150,0.7), 0 0 8px rgba(160,255,190,0.9); }
 
   /* Lista de tarjetas */
   .board {
@@ -106,7 +119,7 @@
     display: grid;
     grid-template-columns: 13% 1fr auto;
     align-items: center;
-    height: 12vmin;
+    height: 11vmin;
     flex-shrink: 0;
     padding: 0 5% 0 0;
     transform: skewX(-12deg);
@@ -181,6 +194,7 @@
       <div class="reto">RETO</div>
       <div class="speed">SPEED</div>
     </div>
+    <div class="big-clock" id="bigClock">0:00:00</div>
     <div class="resultados">RESULTADOS</div>
 
     <div class="board">
@@ -248,6 +262,47 @@
   load();
   setInterval(load, 1500);
   window.addEventListener('resize', () => { if (window._lastSig) render(JSON.parse(window._lastSig)); });
+
+  // ----- Cronómetro sincronizado -----
+  const bigClock = document.getElementById('bigClock');
+  let swState = { running: false, baseMs: 0, startedEpochMs: null, offset: 0 };
+
+  function fmtClock(ms) {
+    if (ms < 0) ms = 0;
+    const totalCent = Math.floor(ms / 10);
+    const cent = totalCent % 100;
+    const totalSec = Math.floor(totalCent / 100);
+    const sec = totalSec % 60;
+    const min = Math.floor(totalSec / 60);
+    return min + ':' + String(sec).padStart(2,'0') + ':' + String(cent).padStart(2,'0');
+  }
+
+  async function loadStopwatch() {
+    try {
+      const res = await fetch('/api/stopwatch');
+      const s = await res.json();
+      // offset corrige la diferencia entre el reloj del servidor y el del navegador
+      swState.offset = s.serverNow - Date.now();
+      swState.running = s.running;
+      swState.baseMs = s.baseMs;
+      swState.startedEpochMs = s.startedEpochMs;
+      bigClock.classList.toggle('running', s.running);
+    } catch (e) { /* reintenta */ }
+  }
+
+  function tickClock() {
+    let ms = swState.baseMs;
+    if (swState.running && swState.startedEpochMs !== null) {
+      const serverNow = Date.now() + swState.offset;
+      ms += serverNow - swState.startedEpochMs;
+    }
+    bigClock.textContent = fmtClock(ms);
+    requestAnimationFrame(tickClock);
+  }
+
+  loadStopwatch();
+  setInterval(loadStopwatch, 1500); // resincroniza con el servidor
+  requestAnimationFrame(tickClock); // anima suave a 60fps localmente
 </script>
 </body>
 </html>

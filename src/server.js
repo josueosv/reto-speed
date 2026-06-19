@@ -1,7 +1,8 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { pool, initDb, getRanking, parseTime, TEAMS } from './db.js';
+import { pool, initDb, getRanking, parseTime, TEAMS,
+         getStopwatch, startStopwatch, stopStopwatch, resetStopwatch } from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -23,6 +24,16 @@ app.get('/api/ranking', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener ranking' });
+  }
+});
+
+// Estado del cronómetro (público, para la proyección).
+app.get('/api/stopwatch', async (req, res) => {
+  try {
+    res.json(await getStopwatch());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al leer cronómetro' });
   }
 });
 
@@ -106,6 +117,20 @@ app.post('/api/reset', checkPin, async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Error al reiniciar' });
   }
+});
+
+// --- Control del cronómetro (protegido) ---
+app.post('/api/stopwatch/start', checkPin, async (req, res) => {
+  try { res.json(await startStopwatch()); }
+  catch (err) { console.error(err); res.status(500).json({ error: 'Error' }); }
+});
+app.post('/api/stopwatch/stop', checkPin, async (req, res) => {
+  try { res.json(await stopStopwatch()); }
+  catch (err) { console.error(err); res.status(500).json({ error: 'Error' }); }
+});
+app.post('/api/stopwatch/reset', checkPin, async (req, res) => {
+  try { res.json(await resetStopwatch()); }
+  catch (err) { console.error(err); res.status(500).json({ error: 'Error' }); }
 });
 
 // --- Rutas de páginas ---

@@ -31,6 +31,24 @@ export async function initDb() {
     );
   `);
 
+  // Estado del cronómetro (una sola fila, id=1).
+  // running: si está corriendo. base_ms: tiempo acumulado al pausar.
+  // started_epoch_ms: instante (epoch en ms del servidor) en que se inició/reanudó.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS stopwatch (
+      id INTEGER PRIMARY KEY DEFAULT 1,
+      running BOOLEAN NOT NULL DEFAULT false,
+      base_ms BIGINT NOT NULL DEFAULT 0,
+      started_epoch_ms BIGINT,
+      CONSTRAINT single_row CHECK (id = 1)
+    );
+  `);
+  await pool.query(`
+    INSERT INTO stopwatch (id, running, base_ms, started_epoch_ms)
+    VALUES (1, false, 0, NULL)
+    ON CONFLICT (id) DO NOTHING;
+  `);
+
   // Sembrar los 16 equipos si la tabla está vacía.
   const { rows } = await pool.query('SELECT COUNT(*)::int AS c FROM teams');
   if (rows[0].c === 0) {
@@ -71,4 +89,54 @@ export async function getRanking() {
     time: r.time_display,
     hasTime: r.time_ms !== null,
   }));
+}
+
+// --- Cronómetro sincronizado ---
+
+// Devuelve el estado actual del cronómetro para que el cliente lo muestre.
+export async function getStopwatch() {
+  const { rows } = await pool.query(
+    'SELECT running, base_ms, started_epoch_ms FROM stopwatch WHERE id = 1'
+  );
+  const r = rows[0];
+  return {
+    running: r.running,
+    baseMs: Number(r.base_ms),
+    startedEpochMs: r.started_epoch_ms !== null ? Number(r.started_epoch_ms) : null,
+    serverNow: Date.now(), // para que el cliente corrija el desfase de reloj
+  };
+}
+
+// Inicia o reanuda el cronómetro.
+export async function startStopwatch() {
+  await pool.query(
+    'UPDATE stopwatch SET running = true, started_epoch_ms = $1 WHERE id = 1 AND running = false',
+    [Date.now()]
+  );
+  return getStopwatch();
+}
+
+// Detiene el cronómetro y acumula el tiempo transcurrido en base_ms.
+export async function stopStopwatch() {
+  const { rows } = await pool.query(
+    'SELECT running, base_ms, started_epoch_ms FROM stopwatch WHERE id = 1'
+  );
+  const r = rows[0];
+  if (r.running) {
+    const elapsed = Date.now() - Number(r.started_epoch_ms);
+    const newBase = Number(r.base_ms) + elapsed;
+    await pool.query(
+      'UPDATE stopwatch SET running = false, base_ms = $1, started_epoch_ms = NULL WHERE id = 1',
+      [newBase]
+    );
+  }
+  return getStopwatch();
+}
+
+// Reinicia el cronómetro a cero.
+export async function resetStopwatch() {
+  await pool.query(
+    'UPDATE stopwatch SET running = false, base_ms = 0, started_epoch_ms = NULL WHERE id = 1'
+  );
+  return getStopwatch();
 }
