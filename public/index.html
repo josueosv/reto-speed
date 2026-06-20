@@ -66,20 +66,11 @@
   }
 
   /* Encabezado / logo */
-  .logo { text-align: center; margin-bottom: 1vmin; }
-  .logo .reto {
-    font-weight: 900; font-style: italic; letter-spacing: 0.15em;
-    font-size: 4vmin; color: #cfe9ff;
-    text-shadow: 0 0 10px rgba(92,196,243,0.8);
-  }
-  .logo .speed {
-    font-weight: 900; font-style: italic; letter-spacing: 0.04em;
-    font-size: 7vmin; line-height: 0.9;
-    background: linear-gradient(180deg, #aee0ff 0%, #2f7fce 50%, #0e3a6b 100%);
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: 0 6px 16px rgba(0,0,0,0.6);
-    filter: drop-shadow(0 0 12px rgba(60,150,230,0.5));
+  .logo { text-align: center; margin-bottom: 0.3vmin; }
+  .logo-img {
+    height: 17vmin; width: auto; max-width: 80%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 22px rgba(60,150,230,0.55));
   }
   .resultados {
     font-weight: 900; font-style: italic; letter-spacing: 0.3em;
@@ -91,10 +82,10 @@
   .big-clock {
     font-variant-numeric: tabular-nums;
     font-weight: 900; font-style: italic;
-    font-size: 8.5vmin; line-height: 1;
+    font-size: 8vmin; line-height: 1;
     color: #fff;
     letter-spacing: 0.04em;
-    margin: 1.5vmin 0 0.3vmin;
+    margin: 0.8vmin 0 0.2vmin;
     text-shadow: 0 0 24px rgba(124,220,253,0.9), 0 0 8px rgba(124,220,253,0.8);
     transition: color 0.2s;
   }
@@ -191,8 +182,7 @@
 
   <div class="wrap">
     <div class="logo">
-      <div class="reto">RETO</div>
-      <div class="speed">SPEED</div>
+      <img src="/img/reto_speed.png" alt="RETO SPEED" class="logo-img">
     </div>
     <div class="big-clock" id="bigClock">0:00:00</div>
     <div class="resultados">RESULTADOS</div>

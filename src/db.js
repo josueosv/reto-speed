@@ -15,7 +15,7 @@ export const pool = new Pool({
 
 // Orden oficial de competencia.
 export const TEAMS = [
-  'GRAIAU', 'GEECO', 'GAD', 'DAI', 'OC', 'GITI', 'GCP', 'GRYGE',
+  'GRIAU', 'GEECO', 'GAD', 'DAI', 'OC', 'GITI', 'GCP', 'GRYGE',
   'GRF', 'GL', 'GI', 'GOF', 'GS', 'GEFPP', 'ONEC', 'GRIFI',
 ];
 
@@ -59,6 +59,14 @@ export async function initDb() {
       params
     );
     console.log('✓ 16 equipos sembrados en la base de datos.');
+  }
+
+  // Corrección de nombre: GRAIAU -> GRIAU (conserva el tiempo si ya lo tenía).
+  const fix = await pool.query(
+    `UPDATE teams SET name = 'GRIAU' WHERE name = 'GRAIAU'`
+  );
+  if (fix.rowCount > 0) {
+    console.log('✓ Nombre corregido: GRAIAU → GRIAU');
   }
 }
 
