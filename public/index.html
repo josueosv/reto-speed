@@ -65,16 +65,21 @@
     padding: 1.5vh 4vmin;
   }
 
-  /* Encabezado / logo */
-  .logo { text-align: center; margin: -3.5vh 0 -2.5vh; }
+  /* Cabecera: logo + cronómetro lado a lado */
+  .header {
+    display: flex; align-items: center; justify-content: center;
+    gap: 4vw; width: 100%;
+    margin: -1vh 0 1vh;
+  }
   .logo-img {
-    height: 25vh; width: auto; max-width: 88%;
+    height: 20vh; width: auto; max-width: 40vw;
     object-fit: contain;
     filter: drop-shadow(0 0 22px rgba(60,150,230,0.55));
   }
+  .clock-box { display: flex; flex-direction: column; align-items: center; }
   .resultados {
     font-weight: 900; font-style: italic; letter-spacing: 0.3em;
-    font-size: 3vh; color: var(--cyan-bright); margin: 0 0 0.8vh;
+    font-size: 3.2vh; color: var(--cyan-bright); margin: 0.5vh 0 0;
     text-shadow: 0 0 18px rgba(124,220,253,0.9), 0 0 4px rgba(124,220,253,1);
   }
 
@@ -82,10 +87,10 @@
   .big-clock {
     font-variant-numeric: tabular-nums;
     font-weight: 900; font-style: italic;
-    font-size: 7.5vh; line-height: 1;
+    font-size: 13vh; line-height: 1;
     color: #fff;
     letter-spacing: 0.04em;
-    margin: 0 0 0.2vh;
+    margin: 0;
     text-shadow: 0 0 24px rgba(124,220,253,0.9), 0 0 8px rgba(124,220,253,0.8);
     transition: color 0.2s;
   }
@@ -110,7 +115,7 @@
     display: grid;
     grid-template-columns: 13% 1fr auto;
     align-items: center;
-    height: 13.5vh;
+    height: 16vh;
     flex-shrink: 0;
     padding: 0 5% 0 0;
     transform: skewX(-12deg);
@@ -181,11 +186,13 @@
   <div class="live-dot"><i></i> EN VIVO</div>
 
   <div class="wrap">
-    <div class="logo">
+    <div class="header">
       <img src="/img/reto_speed.png" alt="RETO SPEED" class="logo-img">
+      <div class="clock-box">
+        <div class="big-clock" id="bigClock">0:00:00</div>
+        <div class="resultados">RESULTADOS</div>
+      </div>
     </div>
-    <div class="big-clock" id="bigClock">0:00:00</div>
-    <div class="resultados">RESULTADOS</div>
 
     <div class="board">
       <div class="viewport">
